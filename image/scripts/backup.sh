@@ -141,10 +141,22 @@ log 2 "Backing up database to temporary file '$FULL_DUMP_PATH'..."
 
 if [[ "$DB_TYPE" == "mysql" ]]; then
     mysqldump --no-tablespaces -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" > "$FULL_DUMP_PATH"
+
+    ret=$?
 elif [[ "$DB_TYPE" == "postgresql" ]]; then
     pg_dump -h "$DB_HOST" -p $DB_PORT -U "$DB_USER" -d "$DB_NAME" > $FULL_DUMP_PATH
+
+    ret=$?
 else
     echo "❌ Error: 'DB_TYPE' env variable set to incorrect value (only accepts 'mysql' or 'postgresql' as values)."
+
+    exit 1
+fi
+
+# Check output of dump command.
+if [[ $ret -ne 0 ]]; then
+    echo "❌ Error: Failed to dump database for '$DB_TYPE'."
+    echo "Error code: $ret"
 
     exit 1
 fi
