@@ -1,0 +1,19 @@
+version: "3.9"
+
+services:
+  db:
+    image: mysql:8.0
+    hostname: db
+    volumes:
+      - ./conf/my.cnf:/etc/mysql/my.cnf
+      - ./db-data:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: "test-db"
+      MYSQL_ROOT_PASSWORD: "changeme123"
+  db-backups:
+    image: db-backups:latest
+    hostname: db-backups
+    volumes:
+      - ./backup-logs:/var/log/backups/
+    env_file:
+      - ./.env
