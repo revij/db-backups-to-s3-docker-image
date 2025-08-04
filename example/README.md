@@ -24,7 +24,7 @@ sudo docker exec -it example-db-1 bash
 Once inside the container, you can access the MySQL CLI using a command like below (root user).
 
 ```bash
-mysql -u root -p"<password>"`
+mysql -u root -p"<password>"
 ```
 
 Then, to select the database you want to back up: 
