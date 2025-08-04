@@ -109,7 +109,7 @@ log 1 "Starting backup on '$DATE_MORE'..."
 log 3 "S3 Settings"
 log 3 "\tEndpoint: $S3_ENDPOINT"
 log 3 "\tKey ID: $S3_KEY_ID"
-log 3 "\tApp Key: $S3_APP_KEY"
+log 4 "\tApp Key: $S3_APP_KEY"
 log 3 "\tBucket Name: $S3_BUCKET"
 log 3 "\tBucket Directory: $S3_BUCKET_DIR"
 
