@@ -156,7 +156,7 @@ fi
 # Check output of dump command.
 if [[ $ret -ne 0 ]]; then
     echo "❌ Error: Failed to dump database for '$DB_TYPE'."
-    echo "Error code: $ret"
+    echo "Error Code: $ret"
 
     exit 1
 fi
@@ -182,11 +182,19 @@ export AWS_ENDPOINT_URL="https://${S3_ENDPOINT}"
 S3_URL="s3://${S3_BUCKET}/${S3_BUCKET_DIR}"
 
 env PASSPHRASE="$DUP_PASS" duplicity "${DUP_CMD_ARGS[@]}" --allow-source-mismatch "$FULL_DUMP_PATH" "$S3_URL"
+ret=$?
 
 # Remove local backup.
 if [[ "$DEL_LOCAL" -ge 1 ]]; then
     log 3 "Removing local backup file '$FULL_DUMP_PATH'..."
     rm -f "$FULL_DUMP_PATH"
+fi
+
+if [[ $ret -ne 0 ]]; then
+    echo "❌ Error: Failed to upload backup to S3 bucket. Duplicity command failed."
+    echo "Error Code: $ret"
+
+    exit 1
 fi
 
 log 1 "✅ Backup completed!"
