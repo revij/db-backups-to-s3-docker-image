@@ -140,11 +140,18 @@ FULL_DUMP_PATH="/tmp/${DUMP_FILE_NAME}"
 log 2 "Backing up database to temporary file '$FULL_DUMP_PATH'..."
 
 if [[ "$DB_TYPE" == "mysql" ]]; then
-    mysqldump --no-tablespaces -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" > "$FULL_DUMP_PATH"
+    mysqldump --no-tablespaces -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" > "$FULL_DUMP_PATH"
 
     ret=$?
 elif [[ "$DB_TYPE" == "postgresql" ]]; then
-    pg_dump -h "$DB_HOST" -p $DB_PORT -U "$DB_USER" -d "$DB_NAME" > $FULL_DUMP_PATH
+    export PGPASSFILE=/dev/null
+
+    # Set PG password if set.
+    if [[ -n "$DB_PASS" ]]; then
+        export PGPASSWORD="$DB_PASS"
+    fi
+
+    pg_dump -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" > "$FULL_DUMP_PATH"
 
     ret=$?
 else
