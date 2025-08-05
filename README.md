@@ -33,8 +33,6 @@ I'd recommend giving the ([`example/`](./example)) directory a look as it includ
 I'd also recommend implementing this image using Docker Compose. For example, in your `docker-compose.yml` file, you can create the backups service like below.
 
 ```yaml
-version: "3.9"
-
 services:
   db-backups:
     image: db-backups:latest
@@ -44,6 +42,8 @@ services:
     env_file:
       - ./.env
 ```
+
+📝**NOTE**: The above configuration expects you to store the project's env variables inside a separate file (`./env`). You can replace the `env_file` section with `environment` and pass the env variables inside of the `docker-compose.yml` file directly in `<env_var>: "<value>"` format.
 
 ## Environmental Configuration
 All configuration for the backup script is set using environmental variables inside of the Docker container. In the Docker Compose application example inside this repository ([`example/`](./example)), we store the environmental variables inside of the [`example/.env`](./example/.env.example) file. By default, the file is called `.env.example`. Therefore, make sure to rename or copy it to `.env`.
