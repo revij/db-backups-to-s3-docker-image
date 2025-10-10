@@ -8,6 +8,7 @@ RUN apt update
 # Update and install system dependencies
 RUN apt update && apt install -y \
     cron \
+    curl \
     gpg \
     python3 \
     python3-pip \

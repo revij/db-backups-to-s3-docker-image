@@ -18,6 +18,22 @@ log() {
     fi
 }
 
+# Healthchecks.io ping function.
+hc_ping() {
+    if [[ -n "$HC_PING_URL" ]]; then
+        local endpoint="$1"
+        local message="$2"
+
+        if [[ -n "$message" ]]; then
+            curl -fsS -m 10 --retry 3 --data-raw "$message" "${HC_PING_URL}${endpoint}" > /dev/null 2>&1
+        else
+            curl -fsS -m 10 --retry 3 "${HC_PING_URL}${endpoint}" > /dev/null 2>&1
+        fi
+
+        log 3 "Healthchecks.io ping sent: ${endpoint}"
+    fi
+}
+
 # Set database variables to default if not already set.
 if [[ -z "$DB_TYPE" ]]; then
     log 1 "⚠️ Warning: 'DB_TYPE' env variable not set. Using 'mysql'..."
@@ -106,6 +122,9 @@ fi
 # Print verbose information.
 log 1 "Starting backup on '$DATE_MORE'..."
 
+# Ping healthchecks.io to signal start.
+hc_ping "/start"
+
 log 3 "S3 Settings"
 log 3 "\tEndpoint: $S3_ENDPOINT"
 log 3 "\tKey ID: $S3_KEY_ID"
@@ -157,6 +176,7 @@ elif [[ "$DB_TYPE" == "postgresql" ]]; then
 else
     echo "❌ Error: 'DB_TYPE' env variable set to incorrect value (only accepts 'mysql' or 'postgresql' as values)."
 
+    hc_ping "/fail" "Error: Invalid DB_TYPE value '$DB_TYPE'. Only 'mysql' or 'postgresql' are supported."
     exit 1
 fi
 
@@ -165,6 +185,7 @@ if [[ $ret -ne 0 ]]; then
     echo "❌ Error: Failed to dump database for '$DB_TYPE'."
     echo "Error Code: $ret"
 
+    hc_ping "/fail" "Error: Failed to dump database for '$DB_TYPE'. Exit code: $ret"
     exit 1
 fi
 
@@ -201,7 +222,11 @@ if [[ $ret -ne 0 ]]; then
     echo "❌ Error: Failed to upload backup to S3 bucket. Duplicity command failed."
     echo "Error Code: $ret"
 
+    hc_ping "/fail" "Error: Failed to upload backup to S3 bucket. Duplicity exit code: $ret"
     exit 1
 fi
 
 log 1 "✅ Backup completed!"
+
+# Ping healthchecks.io to signal success.
+hc_ping "" "Backup completed successfully for database '$DB_NAME' on $DATE_MORE"

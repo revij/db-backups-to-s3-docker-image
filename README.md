@@ -69,6 +69,7 @@ Here are a list of environmental variables that are supported.
 | DUP_FORCE_INC | `0` | Forces Duplicity to perform an incremental backup. |
 | DUP_FORCE_FULL | `0` | Forces Duplicity to perform a full backup. |
 | DUP_PASS | `12345` | This is the GnuPG passphrase which is required for restoring the backup. It is recommended you set and change this value! |
+| HC_PING_URL | *N/A* | Optional. The ping URL for monitoring backup status using [healthchecks.io](https://healthchecks.io/) or [self-hosted Healthchecks](https://github.com/healthchecks/healthchecks). When set, the script will send start/success/failure signals. |
 
 ## Credits
 * [Christian Deacon](https://github.com/gamemann)
