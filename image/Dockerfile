@@ -21,16 +21,11 @@ RUN apt update && apt install -y \
 # Install Python packages
 RUN pip3 install --break-system-packages duplicity b2sdk fasteners
 
-# Copy cron job.
-COPY --chmod=0644 ./conf/cron.conf /etc/cron.d/backup
-
-# Run crontab.
-RUN crontab /etc/cron.d/backup
-
-# Copy backup script.
+# Copy scripts.
 COPY --chmod=0700 ./scripts/backup.sh /opt
+COPY --chmod=0755 ./scripts/entrypoint.sh /opt
 
 # Create backup logs directory.
 RUN mkdir -p /var/log/backups
 
-CMD ["/bin/bash", "-c", "printenv > /etc/environment && cron -f"]
+CMD ["/opt/entrypoint.sh"]
