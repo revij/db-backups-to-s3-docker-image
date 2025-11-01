@@ -4,8 +4,33 @@ Timing of the backups are determined by a cron job installed inside of the Docke
 
 The custom Docker image files are stored inside of the [`image/`](./image) directory. There is also a Docker Compose application example you can refer to and use inside of the [`example/`](./example) directory which shows how to utilize this image.
 
-## Building The Docker Image
-The custom Docker image is stored inside of the [`image/`](./image) directory. You can use the `build_image.sh` Bash script to build the Docker image with customization support including the image name, tag, path, and more options.
+## Using Pre-Built Images from GitHub Container Registry
+Pre-built Docker images are automatically published to GitHub Container Registry. You can pull and use them without building locally:
+
+```bash
+docker pull ghcr.io/YOUR_GITHUB_USERNAME/db-backups-to-s3-docker-image:latest
+```
+
+Available tags:
+- `latest` - Latest build from the main branch
+- `v*` - Specific version tags (e.g., `v1.0.0`)
+- `main` - Latest main branch build
+
+To use the pre-built image in Docker Compose, update your `image` reference:
+
+```yaml
+services:
+  db-backups:
+    image: ghcr.io/YOUR_GITHUB_USERNAME/db-backups-to-s3-docker-image:latest
+    hostname: db-backups
+    volumes:
+      - ./backup-logs:/var/log/backups/
+    env_file:
+      - ./.env
+```
+
+## Building The Docker Image Locally
+If you prefer to build the image yourself, the custom Docker image is stored inside of the [`image/`](./image) directory. You can use the `build_image.sh` Bash script to build the Docker image with customization support including the image name, tag, path, and more options.
 
 The following arguments are supported when executing the script.
 
@@ -19,7 +44,7 @@ The following arguments are supported when executing the script.
 | `--no-cache` | - | Builds the Docker image with no cache. |
 | `--help` | - | Prints the help menu. |
 
-By default, the cron job that executes the backup script is ran every night at *12:00* (midnight). However, you can easily change this by editing the [`image/conf/cron.conf`](./image/conf/cron.conf) file and rebuilding the image. You can use a cron generator tool such as [this](https://crontab.cronhub.io/) for assistance!
+By default, the cron job that executes the backup script is ran every night at *12:00* (midnight). You can easily change this by setting the `BACKUP_SCHEDULE` environment variable (see Environmental Configuration section below). You can use a cron generator tool such as [this](https://crontab.cronhub.io/) for assistance!
 
 You may also build the image manually using the following command as root (or using `sudo`).
 
@@ -52,6 +77,7 @@ Here are a list of environmental variables that are supported.
 
 | Name | Default | Description |
 | ---- | ------- | ----------- |
+| BACKUP_SCHEDULE | `0 0 * * *` | Cron schedule for automated backups (default: daily at midnight). Examples: `0 */6 * * *` (every 6 hours), `*/30 * * * *` (every 30 minutes), `0 * * * *` (hourly). |
 | VERBOSE | `1` | The backup script's verbose level. Log messages go up to verbose level `4` currently. |
 | LOG_DIR | `/var/log/backups` | The backup script's log directory inside of the Docker container. Leave blank to disable logging to files. |
 | DEL_LOCAL | `1` | If 1 or higher, deletes the local database dump after uploading it to the S3 bucket. |
