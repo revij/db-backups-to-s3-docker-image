@@ -97,6 +97,8 @@ Here are a list of environmental variables that are supported.
 | EXCLUDE_TABLES | `""` | Comma-separated list of tables to exclude from backup. For MySQL, table names without a database prefix will automatically use `DB_NAME`. For PostgreSQL, specify schema if needed (e.g., `public.table`). Example: `cache,sessions,logs` |
 | DUP_FORCE_INC | `0` | Set to `1` to force an incremental backup (fails if no full backup exists). |
 | DUP_FORCE_FULL | `0` | Set to `1` to force a full backup. When both are `0` (default), Duplicity auto-detects: full on first run, incremental thereafter. |
+| DUP_FULL_IF_OLDER_THAN | *N/A* | Automatically promote to a full backup when the last full backup is older than this interval. Accepts Duplicity time format: `7D` (7 days), `2W` (2 weeks), `1M` (1 month). Ignored when `DUP_FORCE_FULL` or `DUP_FORCE_INC` are set. |
+| DUP_KEEP_N_FULL | *N/A* | Keep only the last N full backups and their associated incrementals. Older backup chains are deleted from S3 automatically after each successful backup. |
 | GPG_KEY_ID | *N/A* | **Recommended.** GPG key ID for public key encryption. When set, backups are encrypted with your GPG public key (no passphrase needed on backup server). Requires mounting `/root/.gnupg` volume. See [GPG Encryption Setup](#gpg-encryption-setup) below. |
 | DUP_PASS | `12345` | **Optional (if using GPG).** Passphrase for symmetric encryption. Used as fallback if `GPG_KEY_ID` is not set. Required for restoring symmetric-encrypted backups. |
 | HC_PING_URL | *N/A* | Optional. The ping URL for monitoring backup status using [healthchecks.io](https://healthchecks.io/) or [self-hosted Healthchecks](https://github.com/healthchecks/healthchecks). When set, the script will send start/success/failure signals. |

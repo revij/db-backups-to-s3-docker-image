@@ -169,6 +169,15 @@ if [[ -z "$DUP_FORCE_FULL" ]]; then
     DUP_FORCE_FULL=0
 fi
 
+# Optional: force a full backup if the last full is older than this interval.
+# Accepts duplicity time format: e.g. 7D (7 days), 2W (2 weeks), 1M (1 month).
+# Ignored when DUP_FORCE_FULL or DUP_FORCE_INC are set.
+DUP_FULL_IF_OLDER_THAN="${DUP_FULL_IF_OLDER_THAN:-}"
+
+# Optional: keep only the last N full backups (and their incrementals).
+# Older chains are removed automatically after each successful backup.
+DUP_KEEP_N_FULL="${DUP_KEEP_N_FULL:-}"
+
 # Print verbose information.
 log 1 "Starting backup on '$DATE_MORE'..."
 
@@ -200,6 +209,8 @@ log 2
 log 2 "Duplicity Settings"
 log 2 "\tForce Incremental: $DUP_FORCE_INC"
 log 2 "\tForce Full: $DUP_FORCE_FULL"
+log 2 "\tFull if older than: ${DUP_FULL_IF_OLDER_THAN:-not set}"
+log 2 "\tKeep N full backups: ${DUP_KEEP_N_FULL:-not set (unlimited)}"
 if [[ -n "$GPG_KEY_ID" ]]; then
     log 2 "\tEncryption: GPG public key"
     log 3 "\tGPG Key ID: $GPG_KEY_ID"
@@ -261,8 +272,12 @@ if [[ "$DUP_FORCE_FULL" -ge 1 ]]; then
 elif [[ "$DUP_FORCE_INC" -ge 1 ]]; then
     DUP_CMD_ARGS=("incremental")
 else
-    # Let duplicity auto-detect: full if no backup exists, incremental otherwise
+    # Auto-detect: full if no backup exists, incremental otherwise.
+    # Optionally promote to full when last full is older than DUP_FULL_IF_OLDER_THAN.
     DUP_CMD_ARGS=()
+    if [[ -n "$DUP_FULL_IF_OLDER_THAN" ]]; then
+        DUP_CMD_ARGS+=("--full-if-older-than=$DUP_FULL_IF_OLDER_THAN")
+    fi
 fi
 
 # We need to export some things for duplicity.
@@ -306,6 +321,28 @@ if [[ $ret -ne 0 ]]; then
 fi
 
 log 1 "✅ Backup completed!"
+
+# Prune old backup chains if DUP_KEEP_N_FULL is set.
+if [[ -n "$DUP_KEEP_N_FULL" ]]; then
+    log 2 "Removing old backups, keeping last $DUP_KEEP_N_FULL full backup(s) and their incrementals..."
+
+    if [[ -n "$GPG_KEY_ID" ]]; then
+        duplicity remove-all-but-n-full "$DUP_KEEP_N_FULL" --force --encrypt-key="$GPG_KEY_ID" "$S3_URL"
+        cleanup_ret=$?
+    elif [[ -n "$DUP_PASS" ]]; then
+        env PASSPHRASE="$DUP_PASS" duplicity remove-all-but-n-full "$DUP_KEEP_N_FULL" --force "$S3_URL"
+        cleanup_ret=$?
+    else
+        duplicity remove-all-but-n-full "$DUP_KEEP_N_FULL" --force "$S3_URL"
+        cleanup_ret=$?
+    fi
+
+    if [[ $cleanup_ret -ne 0 ]]; then
+        log 1 "⚠️ Warning: Failed to remove old backups (exit code: $cleanup_ret). Backup itself succeeded."
+    else
+        log 2 "Old backups removed successfully."
+    fi
+fi
 
 # Ping healthchecks.io to signal success.
 hc_ping "" "Backup completed successfully for database '$DB_NAME' on $DATE_MORE"
